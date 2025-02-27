@@ -1,0 +1,3 @@
+name,dob,gender,address,contact,religion,community,minorityStatus,residentialStatus,admissionQuota,country,course,department,yearOfAdmission,Semester 1,Semester 2,Semester 3,Semester 4,Semester 5,Semester 6,Semester 7,Semester 8
+Amirtha Sharma,2002-05-14,Male,"123 MG Road, Mumbai, India",9876543210,Hindu,OBC,Non-Minority,Hosteller,Government,Domestic,B.Tech,Computer Science,2022,A,B+,A+,B,0,0,0,0
+deekshitha,2006-06-24,Female,"231,east coast road,chennai",6374950166,Hindu,BC,Minority,Hosteller,TamilNadu,Domestic,B Tech,AIML,2023,A,A+,B,B+,C,0,0,0
