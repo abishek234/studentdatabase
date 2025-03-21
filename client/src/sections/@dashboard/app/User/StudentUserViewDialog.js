@@ -76,7 +76,7 @@ export default function StudentUserViewDialog({ open, onClose, userId, user }) {
             <DialogContent>
                 <TextField fullWidth label="Name" value={user?.name || ''} margin="normal" disabled />
                 <TextField fullWidth label="Email" value={user?.email || ''} margin="normal" disabled />
-                <TextField fullWidth label="Date of Birth" value={user?.dob || ''} margin="normal" disabled />
+                <TextField fullWidth label="Date of Birth" value={new Date(user?.dob).toLocaleDateString() || ''} margin="normal" disabled />
                 <TextField fullWidth label="Gender" value={user?.gender || ''} margin="normal" disabled />
                 <TextField fullWidth label="Contact" value={user?.contact || ''} margin="normal" disabled />
                 <TextField fullWidth label="Address" value={user?.address || ''} margin="normal" disabled />

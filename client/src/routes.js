@@ -11,6 +11,7 @@ import ProfilePage from './pages/Profile';
 import User from './pages/User';
 import Student from './pages/Student';
 import StudentProfile from './pages/StudentProfile';
+import StudentChangeForm from './pages/StudentChangeForm';
 
 // ----------------------------------------------------------------------
 
@@ -30,6 +31,7 @@ export default function Router() {
         { path: 'user', element: <User /> },
         { path: 'student', element: <Student /> },
         { path: 'student-profile', element: <StudentProfile /> },
+        { path: 'student-change-form', element: <StudentChangeForm /> },
 
       ],
     },

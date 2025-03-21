@@ -18,27 +18,72 @@ exports.signup = async (req, res) => {
   }
 };
 
+const otpStorage = new Map(); // Use a Map instead of global variable
+
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Generate OTP and store it with an expiry time
+        const otp = crypto.randomInt(100000, 999999).toString(); 
+        otpStorage.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 }); // 5-minute expiry
+
+        // Send OTP to email
+        await sendOtp(email, otp);
+
+        res.status(200).json({ message: "OTP sent to your email.", email });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+exports.verifyOtpAndLogin = async (req, res) => {
+  const { email, userOtp } = req.body;
+
   try {
-    const user = await User.findOne({ email });
-    if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
+      const storedOtpData = otpStorage.get(email);
 
-    // Use the comparePassword method from the schema
-    const isMatch = await user.comparePassword(password);
+      // Check if OTP exists
+      if (!storedOtpData) {
+          return res.status(400).json({ message: "No OTP request found for this email." });
+      }
 
-    if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+      // Check if OTP is expired
+      if (Date.now() > storedOtpData.expiresAt) {
+          otpStorage.delete(email); // Remove expired OTP
+          return res.status(400).json({ message: "OTP expired. Please request a new one." });
+      }
 
-    res.json({ token,id:user.id,email:user.email, role: user.role });
+      // Check if OTP is correct
+      if (storedOtpData.otp !== userOtp) {
+          return res.status(400).json({ message: "Invalid OTP." });
+      }
+
+      // Find user and generate token
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+      otpStorage.delete(email); // Clear OTP after successful verification
+
+      res.status(200).json({ token, id: user.id, email: user.email, role: user.role });
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+      res.status(500).json({ message: "Error verifying OTP", error });
   }
 };
+
+
+
 
 
 exports.getUserProfile = async (req, res) => {

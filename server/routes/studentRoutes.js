@@ -15,4 +15,5 @@ router.post('/bulk-upload', upload.single('file'), studentController.bulkUploadS
 router.post('/migrate-students', studentController.migrateStudentsToUsers);
 router.get('/student-profile/:id', studentController.getStudentsByUserId);
 router.put('/update-profile/:id', studentController.updateStudentByUserId);
+router.post("/request-change", upload.single("proof"),studentController.sendChangeRequest);
 module.exports = router;

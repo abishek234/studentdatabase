@@ -44,6 +44,7 @@ export default function FilterForm({ filters, onFilterChange, onResetFilters }) 
 
   return (
     <RootStyle>
+      
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Name filter */}
         <SearchStyle

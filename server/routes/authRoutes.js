@@ -12,5 +12,5 @@ router.get('/profile/:id', authController.getUserProfile);
 router.get('/users', authController.getAllUsers);
 router.put('/update-user/:id', authController.updateUser);
 router.delete('/delete-user/:id', authController.deleteUser);
-
+router.post('/verification-otp', authController.verifyOtpAndLogin);
 module.exports = router;

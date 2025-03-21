@@ -82,9 +82,6 @@ export default function UserListToolbar({ numSelected, filterName, onFilterName,
             </IconButton>
             
           </Tooltip>
-
-       
-        
         </>
       )}
 

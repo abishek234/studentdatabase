@@ -62,6 +62,11 @@ export const getNavConfig = (userRole) =>{
     icon: getIcon('eva:person-fill'),
   },
   {
+    title: 'change request',  
+    path: '/dashboard/student-change-form',
+    icon: getIcon('eva:people-fill'),
+  },
+  {
     title: 'profile',
     path: '/dashboard/profile',
     icon: getIcon('eva:person-fill'),

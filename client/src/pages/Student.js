@@ -33,7 +33,7 @@ import Label from '../components/Label';
 import Scrollbar from '../components/Scrollbar';
 import Iconify from '../components/Iconify';
 import SearchNotFound from '../components/SearchNotFound';
-import { StudentListHead, StudentListToolbar, StudentMoreMenu, StudentUserDialog, StudentAddUserDialog, StudentUserViewDialog } from '../sections/@dashboard/app/User';
+import { StudentListHead, StudentListToolbar, StudentMoreMenu, StudentUserDialog, StudentAddUserDialog, StudentUserViewDialog,StudentColumnFilter } from '../sections/@dashboard/app/User';
 
 // ----------------------------------------------------------------------
 
@@ -161,9 +161,9 @@ export default function Student() {
         department: '',
         yearOfAdmission: '',
     });
-    
-
-
+    const [visibleColumns, setVisibleColumns] = useState(
+        TABLE_HEAD.map(column => column.id)
+      );
 
 
     // Fetch users from the server on component mount
@@ -190,53 +190,65 @@ export default function Student() {
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
             // Select only filtered users if filtering is applied, otherwise select all users
-            const newSelecteds = filteredUsers.length > 0 
-                ? filteredUsers.map((user) => user.email) 
+            const newSelecteds = filteredUsers.length > 0
+                ? filteredUsers.map((user) => user.email)
                 : users.map((user) => user.email);
-            
+
             setSelected(newSelecteds);
         } else {
             // Uncheck should clear all selected users
             setSelected([]);
         }
     };
-    
+
     // Get the count of selected items that are currently visible in the filtered list
     const getVisibleSelectedCount = () => {
-        return selected.filter((email) => 
+        return selected.filter((email) =>
             filteredUsers.some((user) => user.email === email)
         ).length;
     };
-    
+
     // Get all emails of selected students
     const getSelectedEmails = () => {
         return selected;
     };
-    
+
     const handleClick = (event, email) => {
         const selectedIndex = selected.indexOf(email);
         let newSelected = [];
-        
+
         if (selectedIndex === -1) {
-          newSelected = newSelected.concat(selected, email);
+            newSelected = newSelected.concat(selected, email);
         } else if (selectedIndex === 0) {
-          newSelected = newSelected.concat(selected.slice(1));
+            newSelected = newSelected.concat(selected.slice(1));
         } else if (selectedIndex === selected.length - 1) {
-          newSelected = newSelected.concat(selected.slice(0, -1));
+            newSelected = newSelected.concat(selected.slice(0, -1));
         } else if (selectedIndex > 0) {
-          newSelected = newSelected.concat(
-            selected.slice(0, selectedIndex),
-            selected.slice(selectedIndex + 1)
-          );
+            newSelected = newSelected.concat(
+                selected.slice(0, selectedIndex),
+                selected.slice(selectedIndex + 1)
+            );
         }
         setSelected(newSelected);
-      };
+    };
 
+    const handleToggleColumn = (columnId) => {
+        setVisibleColumns(prev => {
+          if (prev.includes(columnId)) {
+            return prev.filter(id => id !== columnId);
+          } 
+            return [...prev, columnId];
+        });
+      };
+      
+      const handleResetColumns = () => {
+        setVisibleColumns(TABLE_HEAD.map(column => column.id));
+      };
 
     // Handle changes in filters
     const handleFilterChange = (updatedFilters) => {
         setFilters(updatedFilters); // Update the filters in the parent state
-      };
+    };
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -316,7 +328,7 @@ export default function Student() {
             toast.warning("No data available for export!");
             return;
         }
-    
+
         // Convert data for export
         const processedData = filteredUsers.map(user => {
             // Extract semester grades dynamically
@@ -347,10 +359,10 @@ export default function Student() {
                 "Semester 8": grades["Semester 8"] || "",
             };
         });
-    
+
         // Convert data to CSV using Papa Parse
         const csvData = Papa.unparse(processedData);
-    
+
         // Create a Blob and trigger the download
         const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
         saveAs(blob, "students_data.csv");
@@ -360,7 +372,7 @@ export default function Student() {
             toast.warning("No data available for export!");
             return;
         }
-    
+
         // Convert data for export
         const processedData = filteredUsers.map(user => {
             // Extract semester grades dynamically
@@ -391,18 +403,18 @@ export default function Student() {
                 "Semester 8": grades["Semester 8"] || "",
             };
         });
-    
+
         // Convert to worksheet
         const worksheet = XLSX.utils.json_to_sheet(processedData);
-    
+
         // Create a new workbook
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-    
+
         // Export as XLSX
         const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
         const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    
+
         saveAs(blob, "students_data.xlsx");
     };
 
@@ -411,93 +423,95 @@ export default function Student() {
     // Apply sorting and filtering
     const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName, filters);
 
-    
+
 
     const isUserNotFound = filteredUsers.length === 0;
 
     return (
         <Page title="User">
             <Container>
-            <Stack 
-      direction={isMobile ? 'column' : 'row'} 
-      alignItems={isMobile ? 'stretch' : 'center'} 
-      justifyContent="space-between" 
-      spacing={2} 
-      mb={5}
-    >
-      <Typography variant="h4" gutterBottom>
-        Student
-      </Typography>
+                <Stack
+                    direction={isMobile ? 'column' : 'row'}
+                    alignItems={isMobile ? 'stretch' : 'center'}
+                    justifyContent="space-between"
+                    spacing={2}
+                    mb={5}
+                >
+                    <Typography variant="h4" gutterBottom>
+                        Student
+                    </Typography>
 
-      <Stack 
-        direction={isMobile ? 'column' : 'row'} 
-        spacing={2} 
-        width={isMobile ? '100%' : 'auto'}
-      >
-        <Button 
-          variant="contained" 
-          onClick={handleAddModal} 
-          startIcon={<Iconify icon="eva:plus-fill" />}
-          fullWidth={isMobile}
-        >
-          New Student
-        </Button>
+                    <Stack
+                        direction={isMobile ? 'column' : 'row'}
+                        spacing={2}
+                        width={isMobile ? '100%' : 'auto'}
+                    >
+                        <Button
+                            variant="contained"
+                            onClick={handleAddModal}
+                            startIcon={<Iconify icon="eva:plus-fill" />}
+                            fullWidth={isMobile}
+                        >
+                            New Student
+                        </Button>
 
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleExportCSV}
-          startIcon={<Iconify icon="eva:download-fill" />}
-          fullWidth={isMobile}
-        >
-          Export CSV
-        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleExportCSV}
+                            startIcon={<Iconify icon="eva:download-fill" />}
+                            fullWidth={isMobile}
+                        >
+                            Export CSV
+                        </Button>
 
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleExportExcel}
-          startIcon={<Iconify icon="eva:download-fill" />}
-          fullWidth={isMobile}
-        >
-          Export Excel
-        </Button>
-      </Stack>
-    </Stack>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleExportExcel}
+                            startIcon={<Iconify icon="eva:download-fill" />}
+                            fullWidth={isMobile}
+                        >
+                            Export Excel
+                        </Button>
+                    </Stack>
+                </Stack>
 
 
-                <Card  sx={{ minHeight: '500px', position: 'relative' }} >
-                <StudentListToolbar
-      numSelected={getVisibleSelectedCount()}
-      selectedEmails={getSelectedEmails()}
-      filterName={filterName}
-      onFilterName={handleFilterByName}
-      filters={filters}
-      onFilterChange={handleFilterChange}
-      onResetFilters={handleResetFilters}
+                <Card sx={{ minHeight: '500px', position: 'relative' }} >
+                    <StudentListToolbar
+                        numSelected={getVisibleSelectedCount()}
+                        selectedEmails={getSelectedEmails()}
+                        filterName={filterName}
+                        onFilterName={handleFilterByName}
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onResetFilters={handleResetFilters}
+                    />
+                     <StudentColumnFilter 
+      columns={TABLE_HEAD}
+      visibleColumns={visibleColumns}
+      onToggleColumn={handleToggleColumn}
+      onResetColumns={handleResetColumns}
     />
-
-
-
-
 
 
 
                     <Scrollbar>
                         <TableContainer sx={{ minWidth: 800 }}>
                             <Table>
-                            <StudentListHead
-        order={order}
-        orderBy={orderBy}
-        rowCount={filteredUsers.length}
-        numSelected={getVisibleSelectedCount()}
-        onSelectAllClick={handleSelectAllClick}
-        onRequestSort={handleRequestSort}
-        headLabel={TABLE_HEAD}
-      />
+                                <StudentListHead
+                                    order={order}
+                                    orderBy={orderBy}
+                                    rowCount={filteredUsers.length}
+                                    numSelected={getVisibleSelectedCount()}
+                                    onSelectAllClick={handleSelectAllClick}
+                                    onRequestSort={handleRequestSort}
+                                    headLabel={TABLE_HEAD.filter(column => visibleColumns.includes(column.id))}
+                                />
                                 <TableBody>
                                     {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                        const { _id, name,email, dob, gender, contact, address, religion, community, minorityStatus, residentialStatus, admissionQuota, country, course, department, yearOfAdmission, grades } = row;
+                                        const { _id, name, email, dob, gender, contact, address, religion, community, minorityStatus, residentialStatus, admissionQuota, country, course, department, yearOfAdmission, grades } = row;
                                         const isItemSelected = selected.indexOf(email) !== -1;
 
                                         return (
@@ -510,53 +524,54 @@ export default function Student() {
                                                 aria-checked={isItemSelected}
 
                                             >
-                                                  <TableCell padding="checkbox">
-                <Checkbox 
-                  checked={isItemSelected} 
-                  onChange={(event) => handleClick(event, email)} 
-                />
-              </TableCell>
-                                                <TableCell align="left">
-                                                    <IconButton onClick={() => handleViewStudent(row)} aria-label="view user">
-                                                        <Iconify icon="eva:eye-fill" />
-                                                    </IconButton>
-                                                </TableCell>
-
-                                                <TableCell align="left">{name}</TableCell>
-                                                <TableCell align="left">{email || '-'}</TableCell>
-                                                <TableCell align="left">{new Date(dob).toLocaleDateString()}</TableCell>
-                                                <TableCell align="left">{gender}</TableCell>
-                                                <TableCell align="left">{contact}</TableCell>
-                                                <TableCell align="left">{address}</TableCell>
-                                                <TableCell align="left">{religion}</TableCell>
-                                                <TableCell align="left">{community}</TableCell>
-                                                <TableCell align="left">{minorityStatus}</TableCell>
-                                                <TableCell align="left">{residentialStatus}</TableCell>
-                                                <TableCell align="left">{admissionQuota}</TableCell>
-                                                <TableCell align="left">{country}</TableCell>
-                                                <TableCell align="left">{course}</TableCell>
-                                                <TableCell align="left">{department}</TableCell>
-                                                <TableCell align="left">{yearOfAdmission}</TableCell>
-                                                <TableCell align="left">
-    {grades && Object.entries(grades).length > 0 ? (
-        Object.entries(grades).map(([semester, grade]) => (
-            <div key={semester}>{`${semester}: ${grade}`}</div>
-        ))
-    ) : (
-        <div>No grades available</div>
-    )}
-</TableCell>
-
-
-
-
-                                                <TableCell align="left">
-                                                    <StudentMoreMenu
-                                                        onEdit={() => handleOpenModal(row._id)}
-                                                        onDelete={() => handleDeleteUser(row._id)}
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        checked={isItemSelected}
+                                                        onChange={(event) => handleClick(event, email)}
                                                     />
                                                 </TableCell>
-                                            </TableRow>
+                                                {visibleColumns.includes('view') && (
+                  <TableCell align="left">
+                    <IconButton onClick={() => handleViewStudent(row)} aria-label="view user">
+                      <Iconify icon="eva:eye-fill" />
+                    </IconButton>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('name') && <TableCell align="left">{name}</TableCell>}
+                {visibleColumns.includes('email') && <TableCell align="left">{email || '-'}</TableCell>}
+                {visibleColumns.includes('dob') && <TableCell align="left">{new Date(dob).toLocaleDateString()}</TableCell>}
+                {visibleColumns.includes('gender') && <TableCell align="left">{gender}</TableCell>}
+                {visibleColumns.includes('contact') && <TableCell align="left">{contact}</TableCell>}
+                {visibleColumns.includes('address') && <TableCell align="left">{address}</TableCell>}
+                {visibleColumns.includes('religion') && <TableCell align="left">{religion}</TableCell>}
+                {visibleColumns.includes('community') && <TableCell align="left">{community}</TableCell>}
+                {visibleColumns.includes('minorityStatus') && <TableCell align="left">{minorityStatus}</TableCell>}
+                {visibleColumns.includes('residentialStatus') && <TableCell align="left">{residentialStatus}</TableCell>}
+                {visibleColumns.includes('admissionQuota') && <TableCell align="left">{admissionQuota}</TableCell>}
+                {visibleColumns.includes('country') && <TableCell align="left">{country}</TableCell>}
+                {visibleColumns.includes('course') && <TableCell align="left">{course}</TableCell>}
+                {visibleColumns.includes('department') && <TableCell align="left">{department}</TableCell>}
+                {visibleColumns.includes('yearOfAdmission') && <TableCell align="left">{yearOfAdmission}</TableCell>}
+                {visibleColumns.includes('grades') && (
+                  <TableCell align="left">
+                    {grades && Object.entries(grades).length > 0 ? (
+                      Object.entries(grades).map(([semester, grade]) => (
+                        <div key={semester}>{`${semester}: ${grade}`}</div>
+                      ))
+                    ) : (
+                      <div>No grades available</div>
+                    )}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('action') && (
+                  <TableCell align="left">
+                    <StudentMoreMenu
+                      onEdit={() => handleOpenModal(row._id)}
+                      onDelete={() => handleDeleteUser(row._id)}
+                    />
+                  </TableCell>
+                )}
+              </TableRow>
                                         );
                                     })}
                                     {emptyRows > 0 && (
@@ -582,7 +597,7 @@ export default function Student() {
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component="div"
-                        count={users.length}
+                        count={filteredUsers ? filteredUsers.length : users.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
@@ -608,8 +623,6 @@ export default function Student() {
 
                     />
                 </Card>
-
-
             </Container>
         </Page>
     );

@@ -46,7 +46,7 @@ sendEmail : async(email, text) => {
     const  mailOptions = {
       from: '"Student Database Platform" <no-reply@yourdomain.com>',
       to: email,
-      subject: 'Your OTP for Password Change',
+      subject: 'Your OTP',
       text: `Your OTP is ${otp}. It is valid for 10 minutes.`,
   };
 
@@ -81,5 +81,31 @@ try {
 }
 
 
-}
+},
+sendStudentRequestToAdmin: async (studentData, proofFilePath) => {
+  const { name, rollNo, reason } = studentData;
+
+  const mailOptions = {
+    from: '"Student Database Platform" <no-reply@yourdomain.com>',
+    to: process.env.ADMIN_EMAIL,
+    subject: `Change Request from ${name} (Roll No: ${rollNo})`,
+    text: `
+A student has requested a profile change.
+
+Name: ${name}
+Roll No: ${rollNo}
+Reason: ${reason}
+
+Proof is attached.
+    `,
+    attachments: [
+      {
+        filename: proofFilePath.split("/").pop(),
+        path: proofFilePath,
+      },
+    ],
+  };
+
+  await transporter.sendMail(mailOptions);
+},
 }

@@ -6,7 +6,7 @@ const path = require("path");
 const csvparser = require("csv-parser");
 const Parser = require("json2csv").Parser;
 const Papa = require("papaparse");
-const {sendBulkEmail,sendProfileCompletionEmail} = require("../utils/mailer");
+const {sendBulkEmail,sendProfileCompletionEmail,sendStudentRequestToAdmin} = require("../utils/mailer");
 
 exports.addStudent = async (req, res) => {
   try {
@@ -318,3 +318,21 @@ exports.updateStudentByUserId = async (req, res) => {
       res.status(500).send("Server Error");
   }
 };
+
+exports.sendChangeRequest = async (req, res) => {
+    try {
+      const { name, rollNo, reason } = req.body;
+      const proofPath = req.file?.path;
+  
+      if (!name || !rollNo || !reason || !proofPath) {
+        return res.status(400).json({ message: "All fields are required including proof file." });
+      }
+  
+      await sendStudentRequestToAdmin({ name, rollNo, reason }, proofPath);
+  
+      res.status(200).json({ message: "Request sent to admin successfully." });
+    } catch (err) {
+      console.error("Error sending request:", err);
+      res.status(500).json({ message: "Failed to send request." });
+    }
+  };
