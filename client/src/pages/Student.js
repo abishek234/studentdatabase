@@ -33,7 +33,7 @@ import Label from '../components/Label';
 import Scrollbar from '../components/Scrollbar';
 import Iconify from '../components/Iconify';
 import SearchNotFound from '../components/SearchNotFound';
-import { StudentListHead, StudentListToolbar, StudentMoreMenu, StudentUserDialog, StudentAddUserDialog, StudentUserViewDialog,StudentColumnFilter } from '../sections/@dashboard/app/User';
+import { StudentListHead, StudentListToolbar, StudentMoreMenu, StudentUserDialog, StudentAddUserDialog, StudentUserViewDialog, StudentColumnFilter } from '../sections/@dashboard/app/User';
 
 // ----------------------------------------------------------------------
 
@@ -163,7 +163,7 @@ export default function Student() {
     });
     const [visibleColumns, setVisibleColumns] = useState(
         TABLE_HEAD.map(column => column.id)
-      );
+    );
 
 
     // Fetch users from the server on component mount
@@ -234,16 +234,16 @@ export default function Student() {
 
     const handleToggleColumn = (columnId) => {
         setVisibleColumns(prev => {
-          if (prev.includes(columnId)) {
-            return prev.filter(id => id !== columnId);
-          } 
+            if (prev.includes(columnId)) {
+                return prev.filter(id => id !== columnId);
+            }
             return [...prev, columnId];
         });
-      };
-      
-      const handleResetColumns = () => {
+    };
+
+    const handleResetColumns = () => {
         setVisibleColumns(TABLE_HEAD.map(column => column.id));
-      };
+    };
 
     // Handle changes in filters
     const handleFilterChange = (updatedFilters) => {
@@ -329,35 +329,41 @@ export default function Student() {
             return;
         }
 
-        // Convert data for export
+        // Convert data for export, only including visible columns
         const processedData = filteredUsers.map(user => {
-            // Extract semester grades dynamically
-            const grades = user.grades || {};
-            return {
-                name: user.name,
-                email: user.email,
-                dob: user.dob.split("T")[0], // Remove timestamp
-                gender: user.gender,
-                address: user.address,
-                contact: user.contact,
-                religion: user.religion,
-                community: user.community,
-                minorityStatus: user.minorityStatus,
-                residentialStatus: user.residentialStatus,
-                admissionQuota: user.admissionQuota,
-                country: user.country,
-                course: user.course,
-                department: user.department,
-                yearOfAdmission: user.yearOfAdmission,
-                "Semester 1": grades["Semester 1"] || "",
-                "Semester 2": grades["Semester 2"] || "",
-                "Semester 3": grades["Semester 3"] || "",
-                "Semester 4": grades["Semester 4"] || "",
-                "Semester 5": grades["Semester 5"] || "",
-                "Semester 6": grades["Semester 6"] || "",
-                "Semester 7": grades["Semester 7"] || "",
-                "Semester 8": grades["Semester 8"] || "",
-            };
+            const userData = {};
+
+            // Only include columns that are visible
+            if (visibleColumns.includes('name')) userData.name = user.name;
+            if (visibleColumns.includes('email')) userData.email = user.email;
+            if (visibleColumns.includes('dob')) userData.dob = user.dob.split("T")[0];
+            if (visibleColumns.includes('gender')) userData.gender = user.gender;
+            if (visibleColumns.includes('contact')) userData.contact = user.contact;
+            if (visibleColumns.includes('address')) userData.address = user.address;
+            if (visibleColumns.includes('religion')) userData.religion = user.religion;
+            if (visibleColumns.includes('community')) userData.community = user.community;
+            if (visibleColumns.includes('minorityStatus')) userData.minorityStatus = user.minorityStatus;
+            if (visibleColumns.includes('residentialStatus')) userData.residentialStatus = user.residentialStatus;
+            if (visibleColumns.includes('admissionQuota')) userData.admissionQuota = user.admissionQuota;
+            if (visibleColumns.includes('country')) userData.country = user.country;
+            if (visibleColumns.includes('course')) userData.course = user.course;
+            if (visibleColumns.includes('department')) userData.department = user.department;
+            if (visibleColumns.includes('yearOfAdmission')) userData.yearOfAdmission = user.yearOfAdmission;
+
+            // Handle grades separately if they're visible
+            if (visibleColumns.includes('grades')) {
+                const grades = user.grades || {};
+                userData["Semester 1"] = grades["Semester 1"] || "";
+                userData["Semester 2"] = grades["Semester 2"] || "";
+                userData["Semester 3"] = grades["Semester 3"] || "";
+                userData["Semester 4"] = grades["Semester 4"] || "";
+                userData["Semester 5"] = grades["Semester 5"] || "";
+                userData["Semester 6"] = grades["Semester 6"] || "";
+                userData["Semester 7"] = grades["Semester 7"] || "";
+                userData["Semester 8"] = grades["Semester 8"] || "";
+            }
+
+            return userData;
         });
 
         // Convert data to CSV using Papa Parse
@@ -367,41 +373,48 @@ export default function Student() {
         const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
         saveAs(blob, "students_data.csv");
     };
+
     const handleExportExcel = () => {
         if (filteredUsers.length === 0) {
             toast.warning("No data available for export!");
             return;
         }
 
-        // Convert data for export
+        // Convert data for export, only including visible columns
         const processedData = filteredUsers.map(user => {
-            // Extract semester grades dynamically
-            const grades = user.grades || {};
-            return {
-                name: user.name,
-                email: user.email,
-                dob: user.dob.split("T")[0], // Remove timestamp
-                gender: user.gender,
-                address: user.address,
-                contact: user.contact,
-                religion: user.religion,
-                community: user.community,
-                minorityStatus: user.minorityStatus,
-                residentialStatus: user.residentialStatus,
-                admissionQuota: user.admissionQuota,
-                country: user.country,
-                course: user.course,
-                department: user.department,
-                yearOfAdmission: user.yearOfAdmission,
-                "Semester 1": grades["Semester 1"] || "",
-                "Semester 2": grades["Semester 2"] || "",
-                "Semester 3": grades["Semester 3"] || "",
-                "Semester 4": grades["Semester 4"] || "",
-                "Semester 5": grades["Semester 5"] || "",
-                "Semester 6": grades["Semester 6"] || "",
-                "Semester 7": grades["Semester 7"] || "",
-                "Semester 8": grades["Semester 8"] || "",
-            };
+            const userData = {};
+
+            // Only include columns that are visible
+            if (visibleColumns.includes('name')) userData.name = user.name;
+            if (visibleColumns.includes('email')) userData.email = user.email;
+            if (visibleColumns.includes('dob')) userData.dob = user.dob.split("T")[0];
+            if (visibleColumns.includes('gender')) userData.gender = user.gender;
+            if (visibleColumns.includes('contact')) userData.contact = user.contact;
+            if (visibleColumns.includes('address')) userData.address = user.address;
+            if (visibleColumns.includes('religion')) userData.religion = user.religion;
+            if (visibleColumns.includes('community')) userData.community = user.community;
+            if (visibleColumns.includes('minorityStatus')) userData.minorityStatus = user.minorityStatus;
+            if (visibleColumns.includes('residentialStatus')) userData.residentialStatus = user.residentialStatus;
+            if (visibleColumns.includes('admissionQuota')) userData.admissionQuota = user.admissionQuota;
+            if (visibleColumns.includes('country')) userData.country = user.country;
+            if (visibleColumns.includes('course')) userData.course = user.course;
+            if (visibleColumns.includes('department')) userData.department = user.department;
+            if (visibleColumns.includes('yearOfAdmission')) userData.yearOfAdmission = user.yearOfAdmission;
+
+            // Handle grades separately if they're visible
+            if (visibleColumns.includes('grades')) {
+                const grades = user.grades || {};
+                userData["Semester 1"] = grades["Semester 1"] || "";
+                userData["Semester 2"] = grades["Semester 2"] || "";
+                userData["Semester 3"] = grades["Semester 3"] || "";
+                userData["Semester 4"] = grades["Semester 4"] || "";
+                userData["Semester 5"] = grades["Semester 5"] || "";
+                userData["Semester 6"] = grades["Semester 6"] || "";
+                userData["Semester 7"] = grades["Semester 7"] || "";
+                userData["Semester 8"] = grades["Semester 8"] || "";
+            }
+
+            return userData;
         });
 
         // Convert to worksheet
@@ -488,12 +501,12 @@ export default function Student() {
                         onFilterChange={handleFilterChange}
                         onResetFilters={handleResetFilters}
                     />
-                     <StudentColumnFilter 
-      columns={TABLE_HEAD}
-      visibleColumns={visibleColumns}
-      onToggleColumn={handleToggleColumn}
-      onResetColumns={handleResetColumns}
-    />
+                    <StudentColumnFilter
+                        columns={TABLE_HEAD}
+                        visibleColumns={visibleColumns}
+                        onToggleColumn={handleToggleColumn}
+                        onResetColumns={handleResetColumns}
+                    />
 
 
 
@@ -531,47 +544,47 @@ export default function Student() {
                                                     />
                                                 </TableCell>
                                                 {visibleColumns.includes('view') && (
-                  <TableCell align="left">
-                    <IconButton onClick={() => handleViewStudent(row)} aria-label="view user">
-                      <Iconify icon="eva:eye-fill" />
-                    </IconButton>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('name') && <TableCell align="left">{name}</TableCell>}
-                {visibleColumns.includes('email') && <TableCell align="left">{email || '-'}</TableCell>}
-                {visibleColumns.includes('dob') && <TableCell align="left">{new Date(dob).toLocaleDateString()}</TableCell>}
-                {visibleColumns.includes('gender') && <TableCell align="left">{gender}</TableCell>}
-                {visibleColumns.includes('contact') && <TableCell align="left">{contact}</TableCell>}
-                {visibleColumns.includes('address') && <TableCell align="left">{address}</TableCell>}
-                {visibleColumns.includes('religion') && <TableCell align="left">{religion}</TableCell>}
-                {visibleColumns.includes('community') && <TableCell align="left">{community}</TableCell>}
-                {visibleColumns.includes('minorityStatus') && <TableCell align="left">{minorityStatus}</TableCell>}
-                {visibleColumns.includes('residentialStatus') && <TableCell align="left">{residentialStatus}</TableCell>}
-                {visibleColumns.includes('admissionQuota') && <TableCell align="left">{admissionQuota}</TableCell>}
-                {visibleColumns.includes('country') && <TableCell align="left">{country}</TableCell>}
-                {visibleColumns.includes('course') && <TableCell align="left">{course}</TableCell>}
-                {visibleColumns.includes('department') && <TableCell align="left">{department}</TableCell>}
-                {visibleColumns.includes('yearOfAdmission') && <TableCell align="left">{yearOfAdmission}</TableCell>}
-                {visibleColumns.includes('grades') && (
-                  <TableCell align="left">
-                    {grades && Object.entries(grades).length > 0 ? (
-                      Object.entries(grades).map(([semester, grade]) => (
-                        <div key={semester}>{`${semester}: ${grade}`}</div>
-                      ))
-                    ) : (
-                      <div>No grades available</div>
-                    )}
-                  </TableCell>
-                )}
-                {visibleColumns.includes('action') && (
-                  <TableCell align="left">
-                    <StudentMoreMenu
-                      onEdit={() => handleOpenModal(row._id)}
-                      onDelete={() => handleDeleteUser(row._id)}
-                    />
-                  </TableCell>
-                )}
-              </TableRow>
+                                                    <TableCell align="left">
+                                                        <IconButton onClick={() => handleViewStudent(row)} aria-label="view user">
+                                                            <Iconify icon="eva:eye-fill" />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                )}
+                                                {visibleColumns.includes('name') && <TableCell align="left">{name}</TableCell>}
+                                                {visibleColumns.includes('email') && <TableCell align="left">{email || '-'}</TableCell>}
+                                                {visibleColumns.includes('dob') && <TableCell align="left">{new Date(dob).toLocaleDateString()}</TableCell>}
+                                                {visibleColumns.includes('gender') && <TableCell align="left">{gender}</TableCell>}
+                                                {visibleColumns.includes('contact') && <TableCell align="left">{contact}</TableCell>}
+                                                {visibleColumns.includes('address') && <TableCell align="left">{address}</TableCell>}
+                                                {visibleColumns.includes('religion') && <TableCell align="left">{religion}</TableCell>}
+                                                {visibleColumns.includes('community') && <TableCell align="left">{community}</TableCell>}
+                                                {visibleColumns.includes('minorityStatus') && <TableCell align="left">{minorityStatus}</TableCell>}
+                                                {visibleColumns.includes('residentialStatus') && <TableCell align="left">{residentialStatus}</TableCell>}
+                                                {visibleColumns.includes('admissionQuota') && <TableCell align="left">{admissionQuota}</TableCell>}
+                                                {visibleColumns.includes('country') && <TableCell align="left">{country}</TableCell>}
+                                                {visibleColumns.includes('course') && <TableCell align="left">{course}</TableCell>}
+                                                {visibleColumns.includes('department') && <TableCell align="left">{department}</TableCell>}
+                                                {visibleColumns.includes('yearOfAdmission') && <TableCell align="left">{yearOfAdmission}</TableCell>}
+                                                {visibleColumns.includes('grades') && (
+                                                    <TableCell align="left">
+                                                        {grades && Object.entries(grades).length > 0 ? (
+                                                            Object.entries(grades).map(([semester, grade]) => (
+                                                                <div key={semester}>{`${semester}: ${grade}`}</div>
+                                                            ))
+                                                        ) : (
+                                                            <div>No grades available</div>
+                                                        )}
+                                                    </TableCell>
+                                                )}
+                                                {visibleColumns.includes('action') && (
+                                                    <TableCell align="left">
+                                                        <StudentMoreMenu
+                                                            onEdit={() => handleOpenModal(row._id)}
+                                                            onDelete={() => handleDeleteUser(row._id)}
+                                                        />
+                                                    </TableCell>
+                                                )}
+                                            </TableRow>
                                         );
                                     })}
                                     {emptyRows > 0 && (
