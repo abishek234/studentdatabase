@@ -118,76 +118,95 @@ const processExcel = async (filePath) => {
 
   exports.bulkUploadStudents = async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-
-        const filePath = path.resolve(req.file.path);
-        let students = [];
-
-        const mimetype = req.file.mimetype.toLowerCase();
-
-        if (mimetype === "text/csv") {
-            students = await processCSV(filePath);
-        } else if (
-            mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-            mimetype === "application/vnd.ms-excel"
-        ) {
-            students = await processExcel(filePath);
-        } else {
-            return res.status(400).json({ message: "Invalid file type. Only CSV or Excel files are allowed." });
-        }
-
-        // Validate and sanitize student data
-        const studentData = students
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+  
+      const filePath = path.resolve(req.file.path);
+      let students = [];
+  
+      const mimetype = req.file.mimetype.toLowerCase();
+  
+      if (mimetype === "text/csv") {
+        students = await processCSV(filePath);
+      } else if (
+        mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        mimetype === "application/vnd.ms-excel"
+      ) {
+        students = await processExcel(filePath);
+      } else {
+        return res.status(400).json({ message: "Invalid file type. Only CSV or Excel files are allowed." });
+      }
+  
+      const studentData = students
         .map((s, index) => {
-            if (!s.name || !s.dob || !s.gender || !s.contact || !s.country || !s.course) {
-                console.log(`Skipping row ${index + 1} due to missing required fields.`);
-                return null; // Skip invalid rows
+          if (!s.name || !s.dob || !s.gender || !s.contact || !s.country || !s.course) {
+            console.log(`Skipping row ${index + 1} due to missing required fields.`);
+            return null;
+          }
+  
+          let grades = {};
+          Object.keys(s).forEach((key) => {
+            if (key.toLowerCase().includes("semester")) {
+              if (s[key] !== "0" && s[key] !== "" && s[key] !== null) {
+                grades[key.trim()] = s[key];
+              }
             }
-    
-            // Extract semester grades dynamically
-            let grades = {};
-            Object.keys(s).forEach((key) => {
-                if (key.toLowerCase().includes("semester")) {
-                    if (s[key] !== "0" && s[key] !== "" && s[key] !== null) {
-                        grades[key.trim()] = s[key]; // Store only non-zero grades
-                    }
-                }
-            });
-    
-            return {
-                name: s.name || "Unknown",
-                email: s.email || "N/A",
-                dob: s.dob ? new Date(s.dob) : null,
-                gender: s.gender || "Not Specified",
-                address: s.address || "N/A",
-                contact: s.contact || "N/A",
-                religion: s.religion || "N/A",
-                community: s.community || "N/A",
-                minorityStatus: s.minorityStatus || "None",
-                residentialStatus: s.residentialStatus || "Non-Resident",
-                admissionQuota: s.admissionQuota || "General",
-                country: s.country || "Unknown",
-                course: s.course || "Unknown",
-                department: s.department || "N/A",
-                yearOfAdmission: parseInt(s.yearOfAdmission) || new Date().getFullYear(),
-                grades: grades, // Updated grades structure
-            };
+          });
+  
+          return {
+            name: s.name || "Unknown",
+            email: s.email || "N/A",
+            dob: s.dob ? new Date(s.dob) : null,
+            gender: s.gender || "Not Specified",
+            address: s.address || "N/A",
+            contact: s.contact || "N/A",
+            religion: s.religion || "N/A",
+            community: s.community || "N/A",
+            minorityStatus: s.minorityStatus || "None",
+            residentialStatus: s.residentialStatus || "Non-Resident",
+            admissionQuota: s.admissionQuota || "General",
+            country: s.country || "Unknown",
+            course: s.course || "Unknown",
+            department: s.department || "N/A",
+            yearOfAdmission: parseInt(s.yearOfAdmission) || new Date().getFullYear(),
+            grades: grades,
+          };
         })
-        .filter((student) => student !== null); // Remove null entries
-    
-        if (studentData.length === 0) {
-            return res.status(400).json({ message: "No valid student data to upload." });
+        .filter((student) => student !== null);
+  
+      if (studentData.length === 0) {
+        return res.status(400).json({ message: "No valid student data to upload." });
+      }
+  
+      // Insert student and user documents
+      let insertedCount = 0;
+      for (const student of studentData) {
+        const existingUser = await User.findOne({ email: student.email });
+  
+        if (!existingUser) {
+          await Student.create(student);
+  
+          await User.create({
+            name: student.name,
+            email: student.email,
+            password: "student123",
+            role: "student",
+          });
+  
+          insertedCount++;
+        } else {
+          console.log(`Skipped ${student.email} - user already exists.`);
         }
-
-        await Student.insertMany(studentData);
-        fs.unlinkSync(filePath); // Remove uploaded file after processing
-
-        res.status(201).json({ message: "Students uploaded successfully", count: studentData.length });
+      }
+  
+      fs.unlinkSync(filePath); // Remove uploaded file after processing
+  
+      res.status(201).json({ message: "Students uploaded successfully", count: insertedCount });
     } catch (error) {
-        console.error("Error processing file:", error);
-        res.status(500).json({ message: "Error processing file" });
+      console.error("Error processing file:", error);
+      res.status(500).json({ message: "Error processing file" });
     }
-};
+  };
+  
 
 
 exports.sendEmails = async (req, res) => {
